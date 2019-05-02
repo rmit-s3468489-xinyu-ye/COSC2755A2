@@ -1,2 +1,6 @@
 # COSC2755A2
 COSC2755 Assignment 2 Group 20
+
+Group Members: s3468489, s3615625, s3634919, s3550880
+
+
