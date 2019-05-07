@@ -1,6 +1,6 @@
 import sqlite3
 
-class DatabaseUtils:
+class DatabaseScheme:
     def __init__(self, connection = None):
         if(connection == None):
             connection = self.createConnection()
