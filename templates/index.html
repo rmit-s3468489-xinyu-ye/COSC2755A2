@@ -1,0 +1,103 @@
+{% extends 'bootstrap/base.html' %}
+
+
+{% block title %}Medical appointment system{% endblock %}
+
+
+{% block navbar %}
+
+<nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+          <!-- Brand and toggle get grouped for better mobile display -->
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar navbar-brand" href="/static/img/icon1.png"> 
+                <img src="/static/img/icon1.png" style="margin: 20px 0px" width="40px" height="40px" alt=''>
+            </a> 
+          </div>
+      
+          <!-- Collect the nav links, forms, and other content for toggling -->
+          <div class="collapse navbar-collapse " id="navbar-collapse-1">
+            <ul class="nav navbar-nav" >
+              <li class="changecolor navposition">
+                <a style="color:silver" class="navfontsetting" href="/"> 
+                  Home <span class="sr-only">(current)</span>
+                </a>
+              </li>
+              <li class="changecolor navposition">
+                <a style="color:red" class="navfontsetting" href="/patients/"> 
+                  User information 
+                </a>
+              </li>
+              <li class="changecolor navposition">
+                <a style="color:blue" class="navfontsetting" href="/booklist/">
+                  Book List
+                </a>
+              </li>
+              <li class="changecolor navposition">
+                <a style="color:green" class="navfontsetting" href="/borrowedlist/">
+                  Borrowed Book 
+                </a>
+              </li>
+            </ul>
+            <ul  class="nav navbar-nav navbar-right">
+              <li style="margin: 50px 30px 0px 0px" class="dropdown">
+                <a style="font-style: oblique; font-size: 20px" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                  support <span class="caret"></span>
+                </a>
+                <ul style="min-width:100%;" class="dropdown-menu">
+                  <li style="text-align: center"><a style="font-style: oblique; font-size: 15px" href="/help/">help</a></li>
+                  <li class="divider"></li>
+                  <li style="text-align: center"><a style="font-style: oblique; font-size: 15px" href="/contact/">contact us</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="text-align: center">
+      <h1 style="margin: 200px 0px 0px 0px;font-weight: bold;font-style: oblique">Library Management System</h1>
+      <br>
+      <a href="/static/img/library-100616524-large.jpg">
+          <img src="/static/img/library-100616524-large.jpg" width="1000px" height="600px">
+      </a>
+      <h1 style="color:purple;margin: 50px 0px 0px 0px;font-weight: bold">Make your borrowing easily</h1>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+  .changecolor:hover{
+    background:yellow
+  }
+  .navfontsetting{
+    font-style: oblique;
+    font-family: 'Times New Roman', Times, serif;
+    font-weight: bold;
+    font-size: 40px;
+  }
+  .navposition{
+    padding: 30px 0px;
+    float:left;
+    margin-left: 100px;
+    margin-right: 100px;
+    border:0 !important
+  }
+</style>
+{% endblock %}
