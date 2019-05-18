@@ -44,4 +44,3 @@ class LocalDb(object):
 
 if __name__ == "__main__":
     LocalDb().createTable()
-
