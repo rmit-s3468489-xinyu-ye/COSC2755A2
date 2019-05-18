@@ -67,3 +67,9 @@ class PasswordError(Exception):
         pass
     def __str__(self):
         return "Wrong password"
+
+class InvalidOptionError(Exception):
+    def __init__(self):
+        pass
+    def __str__(self):
+        return "Invalid option, please select again!"

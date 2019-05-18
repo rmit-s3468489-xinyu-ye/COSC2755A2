@@ -1,68 +1,86 @@
-import hashlib, uuid
-import getpass
-import re
-import pickle
-from HashUtil import HashUtil
+import socket, requests, json, time, re, pickle, getpass, hashlib, uuid
+from hashUtil import HashUtil
 from customisedError import *
 from localDB import LocalDb
 from datetime import datetime
+from dashboardConfig import root_url
 # from PI import pi
 class Reception(object):
     
     def __init__(self):
         self.localDB = LocalDb()
+        self.client = Client("127.0.0.1",12345)
+        self.start_signal = "-- _@**##start##**@_ --"
+        self.end_signal = "-- __@**##end##**@__ --"
         
     
     def option(self):
-        print("1. registration")
-        print("2. log in")
-        opt = int(input("Please select the option: "))
+        opt = int(input("1. registration\n2. log in\nPlease select the option: "))
         if opt == 1:
             self.__registration()
+            self.option()
         if opt == 2:
-            self.__login()
-            self.sub_option()
-    
-    def sub_option(self):
-        print("1. search a book")
-        print("2. borrow a book")
-        print("3. return a book")
-        print("4. log out")
-        opt = int(input("Please select the option: "))
+            while True:
+                try:
+                    user_name = input("Please enter your username: ")
+                    user_password = getpass.getpass(prompt="Please enter your password: ")
+                    usr_name = self.__login(user_name,user_password)
+                    break
+                except UsernameError as ue:
+                    print(ue)
+                except PasswordError as pe:
+                    print(pe)
+            self.client.send_msg(usr_name,self.end_signal)
+            dataset = self.client.recv_msg()
 
-    def __login(self):
-        while True:
-            try:
-                user_name = input("Please enter your username: ")
-                user_password = getpass.getpass(prompt="Please enter your password: ")
-                if self.localDB.checkUsername(user_name):
-                    valid_user = self.localDB.getInfo(user_name)
-                    original = pickle.loads(valid_user[3])
-                    condition = original.check_hs_password(user_password,valid_user[2])
-                    if condition:
-                        print("--------------------------------------------------------")
-                        print("Login successful!")
-                        print("Welcome to Library System")
-                        print("Login: "+ datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                        print("--------------------------------------------------------")
-                        break
-                    else:
-                        raise PasswordError()
-                else:
-                    raise UsernameError()
-            except UsernameError as ue:
-                print(ue)
-            except PasswordError as pe:
-                print(pe)
+            if self.start_signal in dataset:
+                while True:
+                    try:
+                        send_option = input("Please select an option: ")
+                        if int(send_option) > 0 and int(send_option) < 4:
+                            self.client.send_msg(send_option,self.end_signal)
+                            self.client.recv_msg()
+                            break
+                        elif int(send_option) == 4:
+                            self.client.send_msg(send_option,self.end_signal)
+                            message = "User {} log out".format(usr_name)
+                            self.client.send_msg(message,self.end_signal)
+                            self.client.recv_msg()
+                            break
+                        else:
+                            raise InvalidOptionError()
+                    except InvalidOptionError as ioe:
+                        print(ioe)
+                    except ValueError:
+                        print(InvalidOptionError())
+            time.sleep(0.5)
+            self.__init__()
+            self.option()
+
+
+    def __login(self,user_name,user_password):
+        if self.localDB.checkUsername(user_name):
+            valid_user = self.localDB.getInfo(user_name)
+            original = pickle.loads(valid_user[3])
+            condition = original.check_hs_password(user_password,valid_user[2])
+            if condition:
+                return user_name
+            else:
+                raise PasswordError()
+        else:
+            raise UsernameError()
         
     def __registration(self):
-        username = self.__usernameValidation()
-        password, encypted = self.__passwordValidation() 
-        first, last = self.__nameValidation() 
-        email = self.__emailValidation()
+        username = self.__username_validation()
+        password, encypted = self.__password_validation() 
+        first, last = self.__name_validation() 
+        email = self.__email_validation()
         self.localDB.uploadToDB(username,password,encypted,first,last,email)
+        #send_data = {"UserName":username,"FirstName":first,"LastName":last,"Email":email}
+        #url = root_url + "/user"
+        #requests.post(url,data=json.dumps(send_data),headers={'Content-Type': 'application/json'})
        
-    def __usernameValidation(self):  
+    def __username_validation(self):  
         username_pattern = r'^[a-zA-Z][a-zA-Z_0-9]*$'  
         while(True):
             try:
@@ -85,7 +103,7 @@ class Reception(object):
                 print(ule)
         return username
 
-    def __passwordValidation(self):
+    def __password_validation(self):
         password_pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9\s\n\r])[^\s\n\r]+$'
         while(True):
             try:
@@ -94,7 +112,7 @@ class Reception(object):
                 if pmatch and len(password) >= 6:
                     confirm_password = getpass.getpass(prompt="Please confirm your password: ")
                     if confirm_password == password:
-                        encrypted = HashUtil()
+                        encrypted U hashutil()
                         encrypted_password = encrypted.make_hs_password(confirm_password)
                         encrypted = pickle.dumps(encrypted)
                         break
@@ -113,7 +131,7 @@ class Reception(object):
                 print(pie)
         return encrypted_password, encrypted
     
-    def __nameValidation(self):
+    def __name_validation(self):
         name_pattern = r'^[a-zA-Z][a-zA-Z_]*$' 
         while(True):
             try:
@@ -146,8 +164,8 @@ class Reception(object):
 
         return first_name, last_name
     
-    def __emailValidation(self):
-        email_pattern = r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]+)$'
+    def __email_validation(self):
+        email_pattern = r'^[_a-zA-Z0-9-]+(\.[_a-zA-Z0-9-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]+)$'
         while(True):
             try:
                 email = input("Please enter your email: ")
@@ -159,3 +177,39 @@ class Reception(object):
             except InvalidEmailError as iee:
                 print(iee)
         return email
+
+
+class Client:
+    def __init__(self,ipaddr,port):
+        self.reception_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.ipaddr = ipaddr
+        self.port = port
+        self.connection = self.reception_socket.connect((ipaddr,port))
+
+    def send_msg(self,msg,end_signal):
+        self.reception_socket.sendall(msg.encode())
+        self.reception_socket.sendall(end_signal.encode())
+            
+    
+    def recv_msg(self):
+        end_signal = "-- __@**##end##**@__ --"
+        start_signal = "-- _@**##start##**@_ --"
+        dataset = []
+        while 1:
+            data = self.reception_socket.recv(4096).decode()
+            if data == end_signal:
+                break
+            dataset.append(data)
+            if data == start_signal:
+                break
+            print(data)
+            
+        if len(dataset) == 0:
+            return None
+        elif len(dataset) == 1:
+            return dataset[0]
+        return dataset
+            
+if __name__ =="__main__":
+    r = Reception()
+    r.option()
