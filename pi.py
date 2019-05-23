@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class pi(ABC):
+class PI(ABC):
 
     def __init__(self):
         pass
