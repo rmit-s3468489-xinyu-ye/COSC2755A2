@@ -73,3 +73,17 @@ class InvalidOptionError(Exception):
         pass
     def __str__(self):
         return "Invalid option, please select again!"
+class UserNotFoundError(Exception):
+    def __init__(self):
+        pass
+    def __str__(self):
+        return "can not find the user, please type again!"
+
+class InvalidInputFormatError(Exception):
+    def __init__(self):
+        pass
+    def __str__(self):
+        return "you input is not valid, please type again!"
+class BorrowedFailedError(Exception):
+    def __init__(self,message):
+        self.message = message
