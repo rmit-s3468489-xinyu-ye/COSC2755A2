@@ -3,41 +3,52 @@ from hashUtil import HashUtil
 from customisedError import *
 from localDB import LocalDb
 from datetime import datetime
-from dashboard_config import root_url
+from dashboardConfig import root_url
 from communicate import Communicate
+from voiceSearch import VoiceRecognition
+from FacialAuthorized import AuthorizedFacialReconition
+import threading
 # from PI import pi
 
 class Reception(object):
     
-    def __init__(self):
-        self.localDB = LocalDb()
-        self.client = Client("127.0.0.1",12346)
-        self.size = 4096
-        self.start_signal = "-- _@**##start##**@_ --"
+    def __init__(self,localDB,client,recognition,
+            size=4096,start_signal="-- _@**##start##**@_ --"):
+        self.localDB = localDB
+        self.client = client
+        self.recognition = recognition
+        self.size = size
+        self.start_signal = start_signal
+        self.facial_authorized = AuthorizedFacialReconition()
         
-    def checkBorrowed():
-        pass
 
     def option(self):
         while True:
             try:
-                opt = int(input("1. registration\n2. log in\n3. remove the user\nPlease select the option: "))
+                opt = int(input("1. registration\n2. log in\n3. remove the user\n4. register a face\n5. facial recognition login\nPlease select the option: "))
                 if opt == 1:
                     self.__registration()
                     self.option()
                 elif opt == 2:
+                    flag = False
                     while True:
                         try:
-                            user_name = input("Please enter your username: ")
+                            user_name = input("Please enter your username(if you forget enter e to exit): ")
+                            if user_name == 'e':
+                                break
                             user_password = getpass.getpass(prompt="Please enter your password: ")
-                            usr_name,first_name,last_name,email_addr = self.__login(user_name,user_password)
+                            usr_name = self.__login(user_name,user_password)
+                            flag = True
                             break
                         except UsernameError as ue:
                             print(ue)
                         except PasswordError as pe:
                             print(pe)
-                    self.client.send_msg(usr_name)
-                    self.main_menu(usr_name)
+                    if flag:
+                        self.client.send_msg(usr_name)
+                        self.main_menu(usr_name)
+                    else:
+                        self.option()
                 elif opt == 3:
                     while True:
                         try:
@@ -45,12 +56,38 @@ class Reception(object):
                             if self.localDB.checkUsername(user_name):
                                 self.localDB.removeUser(user_name)
                                 break
-                                pass
                             else:
                                 raise UserNotFoundError()
                         except UserNotFoundError as une:
                             print(une)
                     self.option()
+                elif opt == 4:
+                    print("In order to add you photo, we need to verify your identity, please enter your username and password")
+                    while True:
+                        try:
+                            user_name = input("Username(if you forget enter e to exit): ")
+                            if user_name == 'e':
+                                break
+                            user_password = getpass.getpass(prompt="Password: ")
+                            usr_name = self.__login(user_name,user_password)
+                            self.facial_authorized.record_user_face(usr_name)
+                            new_thread = threading.Thread(target=self.facial_authorized.encode_user_face,name='encode_thread')
+                            new_thread.daemon = True
+                            new_thread.start()
+                            print("record successful")
+                            break
+                        except UsernameError as ue:
+                            print(ue)
+                        except PasswordError as pe:
+                            print(pe)
+                    self.option()
+                elif opt == 5:
+                    usr_name = self.facial_authorized.recognise_user_face()
+                    if usr_name !="":
+                        self.client.send_msg(usr_name)
+                        self.main_menu(usr_name)
+                    else:
+                        self.option()
                 else:
                     raise InvalidOptionError()
             except InvalidOptionError as ioe:
@@ -78,14 +115,39 @@ class Reception(object):
                                     search_book = input("please enter the search content: ")
                                     self.client.send_msg(search_book)
                                     result = self.client.recv_msg(self.size,False)
+                                    result = json.loads(result)
                                     if result:
-                                        result = json.loads(result)
                                         print("{:30s} {:30s} {:30s}".format("Book title","Book author","Book published date"))
                                         for item in result:
                                             print("{:30s} {:30s} {:30s}".format(item['Title'],item['Author'],item['PublishedDate']))
                                         print()
                                     else:
                                         print("The book has not been founded\n")
+                                elif int(search_option) == 4:
+                                    self.client.send_msg(search_option)
+                                    while True:
+                                        try:
+                                            prmt = "Say book title to search for."
+                                            speach_content = self.recognition.getSearchText(prmt)
+                                            confirm_opt = input("Does you mean \'{}\', type 'y' to confirm, or type 'n' to say again: ".format(speach_content))
+                                            if confirm_opt == 'y' or confirm_opt == 'Y':
+                                                self.client.send_msg(speach_content)
+                                                result = self.client.recv_msg(self.size,False)
+                                                result = json.loads(result)
+                                                if result:
+                                                    print("{:30s} {:30s} {:30s}".format("Book title","Book author","Book published date"))
+                                                    for item in result:
+                                                        print("{:30s} {:30s} {:30s}".format(item['Title'],item['Author'],item['PublishedDate']))
+                                                    print()
+                                                else:
+                                                    print("The book has not been founded\n")
+                                                break
+                                            elif confirm_opt == 'n' or confirm_opt == 'N':
+                                                continue
+                                            else:
+                                                raise InvalidOptionError()
+                                        except InvalidOptionError as ioe:
+                                            print(ioe)
                                 else:
                                     raise InvalidOptionError()
                             except InvalidOptionError as ioe:
@@ -167,7 +229,8 @@ class Reception(object):
                 except ValueError:
                     print(InvalidOptionError())
         time.sleep(0.5)
-        self.__init__()
+        self.__init__(LocalDb(),Client("10.132.106.207",12346),
+                VoiceRecognition("Sound Blaster Play! 3: USB Audio (hw:1,0)"))
         self.option()
         
 
@@ -178,7 +241,7 @@ class Reception(object):
             original = pickle.loads(valid_user[3])
             condition = original.check_hs_password(user_password,valid_user[2])
             if condition:
-                return user_name, valid_user[4], valid_user[5], valid_user[6]
+                return user_name
             else:
                 raise PasswordError()
         else:
@@ -294,12 +357,13 @@ class Reception(object):
 
 
 class Client(Communicate):
-    def __init__(self,ipaddr,port):
+    def __init__(self,ipaddr,port,end_signal = "-- __@**##end##**@__ --",
+    start_signal = "-- _@**##start##**@_ --"):
         self.reception_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.ipaddr = ipaddr
         self.port = port
-        self.end_signal = "-- __@**##end##**@__ --"
-        self.start_signal = "-- _@**##start##**@_ --"
+        self.end_signal = end_signal
+        self.start_signal = start_signal
         self.connection = self.reception_socket.connect((ipaddr,port))
     
     #overriding abstract method
@@ -341,7 +405,7 @@ class Client(Communicate):
         else:
             return dataset
 
-
 if __name__ =="__main__":
-    r = Reception()
+    r = Reception(LocalDb(),Client("10.132.106.207",12346),
+            VoiceRecognition("Sound Blaster Play! 3: USB Audio (hw:1,0)"))
     r.option()

@@ -2,7 +2,7 @@ import socketserver, time
 from datetime import datetime,timedelta
 from customisedError import *
 from communicate import Communicate
-from dashboard_config import root_url
+from dashboardConfig import root_url
 import requests, json
 
 class Master():
@@ -29,14 +29,14 @@ class Master():
             recv_option = self.recv_msg(self.size,False)
             
             if int(recv_option) == 1:
-                search_menu = "1. search by title\n2. search by author\n3. search by publish date"
+                search_menu = "1. search by title\n2. search by author\n3. search by publish date\n4. search by speech recognition"
                 self.send_msg(search_menu)
                 while True:
                     search_opt = self.recv_msg(self.size,False)
                     url = str()
                     if search_opt == 'e':
                         break
-                    elif int(search_opt) == 1:
+                    elif int(search_opt) == 1 or int(search_opt) == 4:
                         book_condition = self.recv_msg(self.size,False)
                         url = root_url + "/book/t/" + book_condition
                     elif int(search_opt) == 2:
