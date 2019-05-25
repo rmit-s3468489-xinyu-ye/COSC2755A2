@@ -6,7 +6,7 @@ from datetime import datetime
 from dashboardConfig import root_url
 from communicate import Communicate
 from voiceSearch import VoiceRecognition
-from FacialAuthorized import AuthorizedFacialReconition
+from facialRecognition import AuthorizedFacialReconition
 import threading
 # from PI import pi
 
