@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
-from dashboardConfig import app,db,ma
+from dashboardConfig import app,db,ma,get_host_ip
+from datetime import datetime, timedelta
+from sqlalchemy import and_
 
 
 db.metadata.clear()
@@ -10,6 +12,11 @@ class LMSUser(db.Model):
     LastName = db.Column(db.String(100),nullable = False)
     Email = db.Column(db.String(100),nullable = False)
     Book = db.relationship('BookBorrowed', backref='user')
+    def __init__(self,UserName,FirstName,LastName,Email):
+        self.UserName = UserName
+        self.FirstName = FirstName
+        self.LastName = LastName
+        self.Email = Email
 
 
 class Book(db.Model):
@@ -28,8 +35,8 @@ class BookBorrowed(db.Model):
     BookBorrowedID = db.Column(db.Integer, primary_key = True)
     LMSUserID = db.Column(db.Integer,db.ForeignKey('lms_user.LMSUserID'),nullable=False)
     BookID = db.Column(db.Integer,db.ForeignKey('book.BookID'),nullable=False)
-    BorrowedDate = db.Column(db.String(100),nullable=False)
-    ReturnedDate = db.Column(db.String(100),nullable=False)
+    BorrowedDate = db.Column(db.DateTime,default = datetime.now())
+    ReturnedDate = db.Column(db.DateTime,default = datetime.now() + timedelta(days=7))
     def __init__(self,LMSUserID,BookID,BorrowedDate,ReturnedDate):
         self.LMSUserID = LMSUserID
         self.BookID = BookID
@@ -38,7 +45,7 @@ class BookBorrowed(db.Model):
 
 class LmsUserSchema(ma.Schema):
     class Meta:
-        fields = ('LMSUserID','UserName','Password','patientAge','FirstName','LastName','Email')
+        fields = ('LMSUserID','UserName','FirstName','LastName','Email')
 
 lmsuser_schema = LmsUserSchema()
 lmsusers_schema = LmsUserSchema(many=True)
@@ -58,6 +65,32 @@ bookborrowed_schema = BookBorrowedSchema()
 booksborrowed_schema = BookBorrowedSchema(many=True)
 
 
+@app.route('/user',methods=["POST"])
+def add_user():
+    data = request.get_json()
+    new_user = LMSUser(data["UserName"],data["FirstName"],data["LastName"],data["Email"])
+    db.session.add(new_user)
+    db.session.commit()
+    return lmsuser_schema.jsonify(new_user)
+
+@app.route('/user',methods=["GET"])
+def get_users():
+    all_users = LMSUser.query.all()
+    result = lmsusers_schema.dump(all_users)
+    return jsonify(result.data)
+
+@app.route('/user/<uid>',methods=["GET"])
+def get_one_user(uid):
+    usrname = LMSUser.query.filter_by(LMSUserID=uid).first()
+    result = lmsuser_schema.dump(usrname)
+    return jsonify(result.data)
+
+@app.route('/user/n/<uname>',methods=["GET"])
+def get_one_user_by_name(uname):
+    usrname = LMSUser.query.filter_by(UserName=uname).first()
+    result = lmsuser_schema.dump(usrname)
+    return jsonify(result.data)
+
 @app.route('/book',methods=["POST"])
 def add_book():
     data = request.get_json()
@@ -65,6 +98,14 @@ def add_book():
     db.session.add(new_book)
     db.session.commit()
     return book_schema.jsonify(new_book)
+
+@app.route('/book/i',methods=["POST"])
+def get_book_id():
+    data = request.get_json()
+    book = Book.query.filter(and_(Book.Title==data["Title"],
+    Book.Author==data["Author"],Book.PublishedDate==data["PublishedDate"])).first()
+    result = book_schema.dump(book)
+    return jsonify(result.data)
 
 @app.route('/book',methods=["GET"])
 def get_all_books():
@@ -78,43 +119,45 @@ def rm_book(BookID):
     db.session.delete(book)
     db.session.commit()
 
+@app.route("/book/<BookID>",methods=["GET"])
+def get_one_book(BookID):
+    book = Book.query.filter_by(BookID=BookID).first()
+    result = book_schema.dump(book)
+    return jsonify(result.data)
+
+
 @app.route("/book/t/<title>",methods=["GET"])
 def get_title(title):
     books = Book.query.filter(Book.Title==title).all()
-    if len(books) > 1:
-        result = books_schema.dump(books)
-        return jsonify(result.data)
-    result = book_schema.dump(books)
-    return jsonfy(result.data)
+    result = books_schema.dump(books)
+    return jsonify(result.data)
+
 
 @app.route("/book/a/<author>",methods=["GET"])
 
 def get_author(author):
     books = Book.query.filter(Book.Author==author).all()
-    if len(books) > 1:
-        result = books_schema.dump(books)
-        return jsonify(result.data)
-    result = book_schema.dump(books)
-    return jsonfy(result.data)
+    result = books_schema.dump(books)
+    return jsonify(result.data)
+
     
 @app.route("/book/p/<publisheddate>",methods=["GET"])
 
 def get_publisheddate(publisheddate):
     books = Book.query.filter(Book.PublishedDate==publisheddate).all()
-    if len(books) > 1:
-        result = books_schema.dump(books)
-        return jsonify(result.data)
-    result = book_schema.dump(books)
-    return jsonfy(result.data)
+    result = books_schema.dump(books)
+    return jsonify(result.data)
 
 
 @app.route("/borrowed",methods=["POST"])
 def add_borrowedbook():
     data = request.get_json()
-    new_borrowed = BookBorrowed(data["LMSUserID"], data["BookID"], data["BorrowedDate"], data["ReturnedDate"])
+    new_borrowed = BookBorrowed(data["LMSUserID"], data["BookID"], 
+    datetime.now(), datetime.now() + timedelta(days=7))
     db.session.add(new_borrowed)
     db.session.commit()
     return bookborrowed_schema.jsonify(new_borrowed)
+
 
 @app.route("/borrowed",methods=["GET"])    
 def get_all():
@@ -128,14 +171,18 @@ def rm_borrowedbook(id):
     db.session.delete(borrowed)
     db.session.commit()
 
-@app.route("/borrowed/<lmsuserid>",methods=["GET"])
-def get_all_borrowed(lmsuserid):
+@app.route("/borrowed/u/<lmsuserid>",methods=["GET"])
+def get_all_borrowed_from_user(lmsuserid):
     borrowedbooks = BookBorrowed.query.filter(BookBorrowed.LMSUserID==lmsuserid).all()
-    if len(books) > 1:
-        result = books_schema.dump(books)
-        return jsonify(result.data)
-    result = book_schema.dump(books)
-    return jsonfy(result.data)
+    result = booksborrowed_schema.dump(borrowedbooks)
+    return jsonify(result.data)
+
+@app.route("/borrowed/b/<BookID>",methods=["GET"])
+def get_all_borrowed_from_book(BookID):
+    borrowedbooks = BookBorrowed.query.filter(BookBorrowed.BookID==BookID).all()
+    result = booksborrowed_schema.dump(borrowedbooks)
+    return jsonify(result.data)
 
 if __name__=='__main__':
-    app.run(host="10.132.105.95",port=8000,debug=True)
+    host = get_host_ip()
+    app.run(host=host,port=8000,debug=True)

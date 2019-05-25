@@ -3,6 +3,7 @@ from flask_bootstrap import Bootstrap
 from urllib.request import urlopen
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+import socket
 
 
 app = Flask(__name__)
@@ -24,4 +25,16 @@ bootstrap  = Bootstrap(app)
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
-root_url = 'http://http://10.132.105.95:8000'
+root_url = 'http://10.132.106.207:8000'
+
+""" this method return the correct host ip address """
+def get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ipaddr = s.getsockname()[0]
+    finally:
+        s.close()
+    return ipaddr
+
+
