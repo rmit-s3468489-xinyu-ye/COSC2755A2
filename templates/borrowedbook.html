@@ -18,36 +18,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" style="margin-top: 100px;width: 600px">
-    <h2 style="color:red;font-weight: bold">Add one book</h2>
-    <br>
-    <form id="submitform"  method="post" role="form" action="">
-        {{ form.csrf_token }}
-        <div class="form-group">
-            {{ wtf.form_field(form.Title) }}
-            <br>
-            {{ wtf.form_field(form.Author) }}
-            <br>
-            {{ wtf.form_field(form.PublishedDate) }}
-        </div>
-        <br>
-            <div align="center">
-                <button type="submit" class="btn btn-success">Add this book</button>
-            </div>
-            
-    </form>
-        <br>
-            {% if wtf.form_field.errors %}
-                {% for error in wtf.form_field.errors %}
-                    <small>{{error}}</small>
-                {% endfor %}
-            {% elif wtf.form_field.description %}
-                <small>{{field.description|safe}}</small>
-            {% endif %}                 
-</div>
-<br>
-<br>
-{% if borrowedlist %}
+
+{% if borrowed %}
 <div class="panel panel-default container" style="margin-top: 50px">
     <div class="panel-heading">
         <h1 style="text-align: center;color:blue;font-family: 'Times New Roman', Times, serif;font-style: italic;font-weight: bold">
@@ -58,38 +30,64 @@
         <table class="table table-hover">   
                 <thead>
                         <tr class="active">
-                          <th style="font-weight: bolder;font-size: 20px" scope="col">Title</th>
-                          <th style="font-weight: bolder;font-size: 20px" scope="col">Author </th>
-                          <th style="font-weight: bolder;font-size: 20px" scope="col">Published date</th>
+                          <th style="font-weight: bolder;font-size: 20px" scope="col">Item</th>
+                          <th style="font-weight: bolder;font-size: 20px" scope="col">User name </th>
+                          <th style="font-weight: bolder;font-size: 20px" scope="col">Book title</th>
+                          <th style="font-weight: bolder;font-size: 20px" scope="col">Book author</th>
+                          <th style="font-weight: bolder;font-size: 20px" scope="col">Book published date</th>
+                          <th style="font-weight: bolder;font-size: 20px" scope="col">Borrowed date</th>
+                          <th style="font-weight: bolder;font-size: 20px" scope="col">Returned date</th>    
                         </tr>
                 </thead>
             <tbody>
-            {% for item in borrowedlist %}
-            <tr class={{book['hover']}}>
+            {% for item in borrowed %}
+            <tr class={{item['hover']}}>
                     <th >
-                        {{book['Title']}}
+                        {{item['itemID']}}
                     </th>
                     <th>
-                        {{book['Author']}}
+                        {{item['uName']}}
                     </th>
                     <th>
-                       {{book['PublishedDate']}}
+                       {{item['bTitle']}}
                     </th>
-                    <th >
+                    <th>
+                        {{item['bAuthor']}}
+                     </th>
+                     <th>
+                        {{item['bPublishDate']}}
+                     </th>
+                     <th>
+                        {{item['BorrowedDate']}}
+                     </th>
+                     <th>
+                        {{item['ReturnedDate']}}
+                     </th>
+                    <!-- <th >
                         <form style="float: right" id="confirmform"  method="POST" role="form" action="">
                             <div class="form-group form-inline">
-                                <input type="hidden" value={{book['BookID']}} id="bId" name="bId">
+                                <input type="hidden" value={{item['BookBorrowedID']}} id="bbId" name="bbId">
                                 <button type="submit" class="btn btn-success" > Remove </button>
                             </div>
                         </form>
-                    </th>
+                    </th> -->
                 </tr>
             {% endfor %}
         </tbody>
         </table>
     </div>
 </div>
+<div align='center'>
+        <div style="width:400px">
+                <form method="POST" action="">
+                    <button type="submit" class="btn btn-success" > Generate report </button>
+                </form>
+        </div>
+    
+</div>
+
 {% endif %}   
+
 {% endblock %}
 
 

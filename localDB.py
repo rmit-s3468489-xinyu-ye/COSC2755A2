@@ -26,6 +26,13 @@ class LocalDb(object):
             cursor.execute(stmt,dataset)
             self.connection.commit()
     
+    def removeUser(self,username):
+        dataset = (username,)
+        stmt = '''DELETE FROM UserInfo WHERE username = %s'''
+        with self.connection.cursor() as cursor:
+            cursor.execute(stmt,dataset)
+            self.connection.commit()
+    
     def getInfo(self,username):
         result = list()
         stmt = "SELECT * from UserInfo where username = %s"
@@ -44,3 +51,4 @@ class LocalDb(object):
 
 if __name__ == "__main__":
     LocalDb().createTable()
+
