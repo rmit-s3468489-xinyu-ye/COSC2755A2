@@ -9,14 +9,15 @@ import requests
 
 class BookForm(FlaskForm):
     """
-    the form is used for adding a book to the database
+    The form is used for adding books to the database
+
     """
-    Title = TextField("Title: ",validators=[InputRequired(message="The title field can not be empty!")],
-    render_kw={"placeholder":"The title of book"})
-    Author = TextField("Author: ",validators=[InputRequired(message="The author field can not be empty!")],
-    render_kw={"placeholder":"the author of book"})
-    PublishedDate = TextField("PublishedDate: ",validators=[InputRequired(message="The publish date field can not be empty!")],
-    render_kw={"placeholder":"the published date of book"})
+    Title = TextField("Title: ",validators=[InputRequired(message="The title field cannot be empty!")],
+    render_kw={"placeholder":"Title of the book"})
+    Author = TextField("Author: ",validators=[InputRequired(message="The author field cannot be empty!")],
+    render_kw={"placeholder":"Author of the book"})
+    PublishedDate = TextField("PublishedDate: ",validators=[InputRequired(message="The published date field cannot be empty!")],
+    render_kw={"placeholder":"Published date of the book"})
 
 
 @app.route("/")
@@ -24,16 +25,18 @@ class BookForm(FlaskForm):
 @app.route('/index/')
 def home():
     """ 
-    the route of home page 
+    The route of home page 
+
     """
     return render_template("index.html")
 
 @app.route("/booklist/",methods=["GET","POST"])
 def booklist():
     """
-    the route of book list page, this page can 
-    view all of the book store in the google clooud sql, and 
-    also can remove any of it, and add any book to database.
+    The route of book list page, this page can 
+    view all of the book stored in the Google cloud SQL, and 
+    can also remove any of them, and add any books to the database.
+
     """
     form = BookForm()
     url = root_url + "/book"
@@ -59,7 +62,8 @@ def booklist():
 @app.route("/userlist/",methods=["GET","POST"])
 def userlist():
     """
-    the route of user information, the admin can view all of the user information here
+    The route of user information, the Admin can view all of the user information
+
     """
     url = root_url + "/user"
     users = json.loads(requests.get(url).text)
@@ -73,7 +77,8 @@ def userlist():
 @app.route("/borrowedlist/",methods=["GET","POST"])
 def borrowedlist():
     """
-    the route of borrow information
+    The route of borrow information
+
     """
     url = root_url + "/borrowed"
     borrowed = json.loads(requests.get(url).text)
@@ -97,7 +102,8 @@ def borrowedlist():
 @app.route("/contact/")
 def contact():
     """
-    group members' information
+    Group members' information
+
     """
     return render_template("contact.html")
 

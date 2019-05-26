@@ -3,21 +3,24 @@ from abc import ABC, abstractmethod
 
 class Communicate(ABC):
     """
-    abstract class
+    Abstract Class
+
     """
     
     @abstractmethod
     def send_msg(self,message):
         """
-        used for sending a message by using TCP protocol 
+        Used for sending a message by the TCP protocol.
+
         """
         pass
     
     @abstractmethod
     def recv_msg(self,size,signal):
         """
-        used for receive a message by using TCP protocol 
-        parameter size is the buffer size each time to receive 
-        parameter signal is judge whether should print the result
+        Used for receiving a message by the TCP protocol, 
+        parameter size is the buffer size to receive each time,
+        parameter signal determines whether the result should be printed.
+
         """
         pass

@@ -11,8 +11,9 @@ class localdb(object):
     
     def createTable(self):
         """
-        create the user table, id as the primary key, username is unique, and the encypt used 
-        for storing the class hashutil object
+        Create the table UserInfo, id is the primary key, username is unique, and the encypt used 
+        for storing the class hashutil object.
+
         """
         with self.connection.cursor() as cursor:
             cursor.execute("DROP TABLE IF EXISTS UserInfo")
@@ -24,7 +25,8 @@ class localdb(object):
     
     def uploadToDB(self,username,password,encrypt,firstname,lastname,email):
         """
-        upload the user information to local database
+        Upload the user information to the local database.
+
         """
         dataset = (username,password,encrypt,firstname,lastname,email,)
         stmt = '''INSERT INTO UserInfo(username,password,encrypt,firstname,
@@ -35,7 +37,8 @@ class localdb(object):
     
     def removeUser(self,username):
         """
-        remove a user depends on username
+        Remove a user by username.
+
         """
         dataset = (username,)
         stmt = '''DELETE FROM UserInfo WHERE username = %s'''
@@ -45,7 +48,8 @@ class localdb(object):
     
     def getInfo(self,username):
         """
-        get all the information filter by specific user name
+        Get all the information by a specific username.
+
         """
         result = list()
         stmt = "SELECT * from UserInfo where username = %s"
@@ -59,7 +63,8 @@ class localdb(object):
             
     def checkUsername(self,username):
         """
-        check whether the username exist in the database
+        Check whether the username already exists in the database.
+
         """
         if self.getInfo(username):
             return True

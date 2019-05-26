@@ -30,7 +30,8 @@ root_url = 'http://10.132.106.207:8000'
 
 def get_host_ip():
     """ 
-    this method return the correct host ip address 
+    This method returns the correct IP address of the host
+
     """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
