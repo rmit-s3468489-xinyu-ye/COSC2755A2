@@ -1,6 +1,6 @@
 import MySQLdb
 
-class LocalDb(object):
+class localdb(object):
 
     def __init__(self):
         self.host = "localhost"
@@ -10,6 +10,10 @@ class LocalDb(object):
         self.connection = MySQLdb.connect(self.host,self.user,self.password,self.database)
     
     def createTable(self):
+        """
+        create the user table, id as the primary key, username is unique, and the encypt used 
+        for storing the class hashutil object
+        """
         with self.connection.cursor() as cursor:
             cursor.execute("DROP TABLE IF EXISTS UserInfo")
             cursor.execute('''CREATE TABLE UserInfo(id INT AUTO_INCREMENT PRIMARY KEY,
@@ -19,6 +23,9 @@ class LocalDb(object):
             self.connection.commit()
     
     def uploadToDB(self,username,password,encrypt,firstname,lastname,email):
+        """
+        upload the user information to local database
+        """
         dataset = (username,password,encrypt,firstname,lastname,email,)
         stmt = '''INSERT INTO UserInfo(username,password,encrypt,firstname,
         lastname,email) VALUES (%s,%s,%s,%s,%s,%s)'''
@@ -27,6 +34,9 @@ class LocalDb(object):
             self.connection.commit()
     
     def removeUser(self,username):
+        """
+        remove a user depends on username
+        """
         dataset = (username,)
         stmt = '''DELETE FROM UserInfo WHERE username = %s'''
         with self.connection.cursor() as cursor:
@@ -34,6 +44,9 @@ class LocalDb(object):
             self.connection.commit()
     
     def getInfo(self,username):
+        """
+        get all the information filter by specific user name
+        """
         result = list()
         stmt = "SELECT * from UserInfo where username = %s"
         dataset = (username,)
@@ -45,10 +58,13 @@ class LocalDb(object):
         return result
             
     def checkUsername(self,username):
+        """
+        check whether the username exist in the database
+        """
         if self.getInfo(username):
             return True
         return False
 
 if __name__ == "__main__":
-    LocalDb().createTable()
+    localdb().createTable()
 
