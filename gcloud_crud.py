@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
-from dashboardConfig import app,db,ma,get_host_ip
+from dashboard_config import app,db,ma,get_host_ip
 from datetime import datetime, timedelta
 from sqlalchemy import and_
+import json
 
 
 db.metadata.clear()
@@ -24,11 +25,13 @@ class Book(db.Model):
     Title = db.Column(db.String(100),nullable = False)
     Author = db.Column(db.String(100),nullable = False)
     PublishedDate = db.Column(db.String(100),nullable = False)
+    BarcodeData = db.Column(db.String(100))
     Borrowed = db.relationship('BookBorrowed', backref='bbook')
-    def __init__(self,Title,Author,PublishedDate):
+    def __init__(self,Title,Author,PublishedDate,BarcodeData=""):
         self.Title = Title
         self.Author = Author
         self.PublishedDate = PublishedDate
+        self.BarcodeData = BarcodeData
 
 
 class BookBorrowed(db.Model):
@@ -52,7 +55,7 @@ lmsusers_schema = LmsUserSchema(many=True)
 
 class BookSchema(ma.Schema):
     class Meta:
-        fields = ('BookID','Title','Author','PublishedDate')
+        fields = ('BookID','Title','Author','PublishedDate','BarcodeData')
 
 book_schema = BookSchema()
 books_schema = BookSchema(many=True)
@@ -102,8 +105,7 @@ def add_book():
 @app.route('/book/i',methods=["POST"])
 def get_book_id():
     data = request.get_json()
-    book = Book.query.filter(and_(Book.Title==data["Title"],
-    Book.Author==data["Author"],Book.PublishedDate==data["PublishedDate"])).first()
+    book = Book.query.filter(and_(Book.Title==data["Title"],Book.Author==data["Author"],Book.PublishedDate==data["PublishedDate"])).first()
     result = book_schema.dump(book)
     return jsonify(result.data)
 
@@ -125,6 +127,23 @@ def get_one_book(BookID):
     result = book_schema.dump(book)
     return jsonify(result.data)
 
+@app.route("/book/b/",methods=["PUT"])
+def modify_barcode():
+    data = request.get_json()
+    book = Book.query.filter(and_(Book.Title == data['Title'],
+    Book.Author == data['Author'],Book.PublishedDate == data['PublishedDate'])).first()
+    book.BarcodeData = data["BarcodeData"]
+    db.session.commit()
+    return book_schema.jsonify(book)
+
+@app.route("/book/b/<barcode>",methods=["GET"])
+def get_by_barcode(barcode):
+    data = json.loads(barcode)
+    book = Book.query.filter(Book.BarcodeData==data['barcode'])
+    print(book)
+    result = book_schema.dump(book)
+    print(result.data)
+    return jsonify(result.data)
 
 @app.route("/book/t/<title>",methods=["GET"])
 def get_title(title):
@@ -164,6 +183,13 @@ def get_all():
     borrowbooks = BookBorrowed.query.all()
     result = booksborrowed_schema.dump(borrowbooks)
     return  jsonify(result.data)
+
+@app.route("/return/<data>",methods=["DELETE"])    
+def return_by_barcode(data):
+    data = json.loads(data)
+    book = BookBorrowed.query.filter(and_(BookBorrowed.BookID==data['BookID'],BookBorrowed.LMSUserID==data['LMSUserID'])).first()
+    db.session.delete(book)
+    db.session.commit()
 
 @app.route("/borrowed/<id>",methods=["DELETE"])
 def rm_borrowedbook(id):

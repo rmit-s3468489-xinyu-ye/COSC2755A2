@@ -1,28 +1,30 @@
 import speech_recognition
 import subprocess, requests
-from dashboardConfig import root_url
+from dashboard_config import root_url
 
 
 #MIC_NAME = "Sound Blaster Play! 3: USB Audio (hw:1,0)"
-class VoiceRecognition:
+class SearchRecognition:
+    """
+    this class is used for searching by using speech recognition
+    """
     def __init__(self,mic_name):
         self.mic_name = mic_name
     
     def getSearchText(self,prompt):
-        # To test searching without the microphone uncomment this line of code
-        # return input("Enter the first name to search for: ")
-        
-        device_id = None
+        """
+        get the text from your speech
+        """
         # Set the device ID of the mic that we specifically want to use to avoid ambiguity
+        device_id = None
         for i, microphone_name in enumerate(speech_recognition.Microphone.list_microphone_names()):
             if(microphone_name == self.mic_name):
                 device_id = i
                 break
-
         # obtain audio from the microphone
         r = speech_recognition.Recognizer()
         with speech_recognition.Microphone(device_index = device_id) as source:
-            # clear console of errors
+             # clear console of errors
             subprocess.run("clear")
 
             # wait for a second to let the recognizer adjust the
@@ -34,7 +36,6 @@ class VoiceRecognition:
                 audio = r.listen(source, timeout = 1.5)
             except speech_recognition.WaitTimeoutError:
                 return None
-
         # recognize speech using Google Speech Recognition
         SearchText = None
         try:
@@ -46,3 +47,4 @@ class VoiceRecognition:
             pass
         finally:
             return SearchText
+

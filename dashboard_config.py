@@ -27,8 +27,11 @@ ma = Marshmallow(app)
 
 root_url = 'http://10.132.106.207:8000'
 
-""" this method return the correct host ip address """
+
 def get_host_ip():
+    """ 
+    this method return the correct host ip address 
+    """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 80))
